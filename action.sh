@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2024 Nils Knieling. All Rights Reserved.
+# Copyright 2024-2025 Nils Knieling. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,6 +51,9 @@ for MY_FILE in "${MY_FILES[@]}"; do
 	fi
 done
 
+# Retry wait time in secounds
+WAIT_SEC=10
+
 #
 # INPUT
 #
@@ -59,11 +62,32 @@ done
 # https://docs.github.com/en/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#inputs
 # When you specify an input, GitHub creates an environment variable for the input with the name INPUT_<VARIABLE_NAME>.
 
-# Set the Hetzner Cloud API token.
-# Retrieves the value from the INPUT_HCLOUD_TOKEN environment variable.
-MY_HETZNER_TOKEN=${INPUT_HCLOUD_TOKEN}
-if [[ -z "$MY_HETZNER_TOKEN" ]]; then
-	exit_with_failure "Hetzner Cloud API token is not set."
+# Set maximum retries * WAIT_SEC (10 sec) for Hetzner Server creation via the Hetzer Cloud API (default: 360 [1 hour])
+# If INPUT_CREATE_WAIT is set, use its value; otherwise, use "360".
+MY_CREATE_WAIT=${INPUT_CREATE_WAIT:-360}
+if [[ ! "$MY_CREATE_WAIT" =~ ^[0-9]+$ ]]; then
+	exit_with_failure "The maximum retries for Hetzner Server creation via the Hetzer Cloud API must be an integer!"
+fi
+
+# Set maximum retries * WAIT_SEC (10 sec) for Hetzner Server deletion via the Hetzer Cloud API (default: 360 [1 hour])
+# If INPUT_DELETE_WAIT is set, use its value; otherwise, use "360".
+MY_DELETE_WAIT=${INPUT_DELETE_WAIT:-360}
+if [[ ! "$MY_DELETE_WAIT" =~ ^[0-9]+$ ]]; then
+	exit_with_failure "The maximum retries for Hetzner Server deletion via the Hetzer Cloud API must be an integer!"
+fi
+
+# Enable IPv4 (default: false)
+# If INPUT_ENABLE_IPV4 is set, use its value; otherwise, use "false".
+MY_ENABLE_IPV4=${INPUT_ENABLE_IPV4:-"true"}
+if [[ "$MY_ENABLE_IPV4" != "true" && "$MY_ENABLE_IPV4" != "false" ]]; then
+	exit_with_failure "Enable IPv4 must be 'true' or 'false'."
+fi
+
+# Enable IPv6 (default: true)
+# If INPUT_ENABLE_IPV6 is set, use its value; otherwise, use "true".
+MY_ENABLE_IPV6=${INPUT_ENABLE_IPV6:-"true"}
+if [[ "$MY_ENABLE_IPV6" != "true" && "$MY_ENABLE_IPV6" != "false" ]]; then
+	exit_with_failure "Enable IPv6 must be 'true' or 'false'."
 fi
 
 # Set the GitHub Personal Access Token (PAT).
@@ -86,27 +110,11 @@ MY_GITHUB_REPOSITORY_OWNER_ID=${GITHUB_REPOSITORY_OWNER_ID:-"0"}
 # Set The ID of the repository (used for Hetzner Cloud Server label).
 MY_GITHUB_REPOSITORY_ID=${GITHUB_REPOSITORY_ID:-"0"}
 
-# Specify here which mode you want to use (default: create):
-# - create : Create a new runner
-# - delete : Delete the previously created runner
-# If INPUT_MODE is set, use its value; otherwise, use "create".
-MY_MODE=${INPUT_MODE:-"create"}
-if [[ "$MY_MODE" != "create" && "$MY_MODE" != "delete" ]]; then
-	exit_with_failure "Mode must be 'create' or 'delete'."
-fi
-
-# Enable IPv4 (default: false)
-# If INPUT_ENABLE_IPV4 is set, use its value; otherwise, use "false".
-MY_ENABLE_IPV4=${INPUT_ENABLE_IPV4:-"true"}
-if [[ "$MY_ENABLE_IPV4" != "true" && "$MY_ENABLE_IPV4" != "false" ]]; then
-	exit_with_failure "Enable IPv4 must be 'true' or 'false'."
-fi
-
-# Enable IPv6 (default: true)
-# If INPUT_ENABLE_IPV6 is set, use its value; otherwise, use "true".
-MY_ENABLE_IPV6=${INPUT_ENABLE_IPV6:-"true"}
-if [[ "$MY_ENABLE_IPV6" != "true" && "$MY_ENABLE_IPV6" != "false" ]]; then
-	exit_with_failure "Enable IPv6 must be 'true' or 'false'."
+# Set the Hetzner Cloud API token.
+# Retrieves the value from the INPUT_HCLOUD_TOKEN environment variable.
+MY_HETZNER_TOKEN=${INPUT_HCLOUD_TOKEN}
+if [[ -z "$MY_HETZNER_TOKEN" ]]; then
+	exit_with_failure "Hetzner Cloud API token is not set."
 fi
 
 # Set the image to use for the instance (default: ubuntu-24.04)
@@ -120,6 +128,15 @@ fi
 # Set the location/region for the instance (default: nbg1)
 # If INPUT_LOCATION is set, use its value; otherwise, use "nbg1".
 MY_LOCATION=${INPUT_LOCATION:-"nbg1"}
+
+# Specify here which mode you want to use (default: create):
+# - create : Create a new runner
+# - delete : Delete the previously created runner
+# If INPUT_MODE is set, use its value; otherwise, use "create".
+MY_MODE=${INPUT_MODE:-"create"}
+if [[ "$MY_MODE" != "create" && "$MY_MODE" != "delete" ]]; then
+	exit_with_failure "Mode must be 'create' or 'delete'."
+fi
 
 # Set the name of the instance (default: gh-runner-$RANDOM)
 # If INPUT_NAME is set, use its value; otherwise, generate a random name using "gh-runner-$RANDOM".
@@ -160,26 +177,6 @@ if [[ "$MY_PRIMARY_IPV6" != "null" && ! "$MY_PRIMARY_IPV6" =~ ^[0-9]+$ ]]; then
 	exit_with_failure "The primary IPv6 ID must be 'null' or an integer!"
 fi
 
-# Set the server type/instance type (default: cx22)
-# If INPUT_SERVER_TYPE is set, use its value; otherwise, use "cx22".
-MY_SERVER_TYPE=${INPUT_SERVER_TYPE:-"cx22"}
-
-# Set maximal wait time (retries * 10 sec) for Hetzner Cloud Server (default: 30 [5 min])
-# If INPUT_SERVER_WAIT is set, use its value; otherwise, use "30".
-MY_SERVER_WAIT=${INPUT_SERVER_WAIT:-"30"}
-# Check if MY_RUNNER_WAIT is an integer
-if [[ ! "$MY_SERVER_WAIT" =~ ^[0-9]+$ ]]; then
-	exit_with_failure "The maximum wait time (reties) for a running Hetzner Cloud Server must be an integer!"
-fi
-
-# Set the SSH key to use for the instance (default: null)
-# If INPUT_SSH_KEY is set, use its value; otherwise, use "null".
-MY_SSH_KEY=${INPUT_SSH_KEY:-"null"}
-# Check if MY_SSH_KEY is an integer
-if [[ "$MY_SSH_KEY" != "null" && ! "$MY_SSH_KEY" =~ ^[0-9]+$ ]]; then
-	exit_with_failure "The SSH key ID must be 'null' or an integer!"
-fi
-
 # Set default GitHub Actions Runner installation directory (default: /actions-runner)
 # If INPUT_RUNNER_DIR is set, its value is used. Otherwise, the default value "/actions-runner" is used.
 MY_RUNNER_DIR=${INPUT_RUNNER_DIR:-"/actions-runner"}
@@ -197,17 +194,45 @@ if [[ "$MY_RUNNER_VERSION" != "latest" && "$MY_RUNNER_VERSION" != "skip" && ! "$
 	exit_with_failure "'$MY_RUNNER_VERSION' is not a valid GitHub Actions Runner version! Enter 'latest', 'skip' or the version without 'v'."
 fi
 
-# Set maximal wait time (retries * 10 sec) for GitHub Actions Runner registration (default: 30 [5 min])
-# If MY_RUNNER_WAIT is set, use its value; otherwise, use "30".
+# Set maximal retries * WAIT_SEC (10 sec) for GitHub Actions Runner registration (default: 60 [10 min])
+# If INPUT_RUNNER_WAIT is set, use its value; otherwise, use "60".
 MY_RUNNER_WAIT=${INPUT_RUNNER_WAIT:-"60"}
 # Check if MY_RUNNER_WAIT is an integer
 if [[ ! "$MY_RUNNER_WAIT" =~ ^[0-9]+$ ]]; then
-	exit_with_failure "The maximum wait time (reties) for GitHub Action Runner registration must be an integer!"
+	exit_with_failure "The maximum wait time (retries) for GitHub Action Runner registration must be an integer!"
 fi
 
 # Set Hetzner Cloud Server ID
+# Check only if mode is delete.
 MY_HETZNER_SERVER_ID=${INPUT_SERVER_ID}
 
+# Set the server type/instance type (default: cx22)
+# If INPUT_SERVER_TYPE is set, use its value; otherwise, use "cx22".
+MY_SERVER_TYPE=${INPUT_SERVER_TYPE:-"cx22"}
+
+# Set maximal retries * WAIT_SEC (10 sec) for Hetzner Cloud Server (default: 30 [5 min])
+# If INPUT_SERVER_WAIT is set, use its value; otherwise, use "30".
+MY_SERVER_WAIT=${INPUT_SERVER_WAIT:-"30"}
+# Check if MY_RUNNER_WAIT is an integer
+if [[ ! "$MY_SERVER_WAIT" =~ ^[0-9]+$ ]]; then
+	exit_with_failure "The maximum wait time (reties) for a running Hetzner Cloud Server must be an integer!"
+fi
+
+# Set the SSH key to use for the instance (default: null)
+# If INPUT_SSH_KEY is set, use its value; otherwise, use "null".
+MY_SSH_KEY=${INPUT_SSH_KEY:-"null"}
+# Check if MY_SSH_KEY is an integer
+if [[ "$MY_SSH_KEY" != "null" && ! "$MY_SSH_KEY" =~ ^[0-9]+$ ]]; then
+	exit_with_failure "The SSH key ID must be 'null' or an integer!"
+fi
+
+# Set the volume ID which should be attached to the instance at the creation time (default: null)
+# If INPUT_VOLUME is set, use its value; otherwise, use "null".
+MY_VOLUME=${INPUT_VOLUME:-"null"}
+# Check if MY_VOLUME is an integer
+if [[ "$MY_VOLUME" != "null" && ! "$MY_VOLUME" =~ ^[0-9]+$ ]]; then
+	exit_with_failure "The volume ID must be 'null' or an integer!"
+fi
 
 #
 # DELETE
@@ -221,9 +246,13 @@ if [[ "$MY_MODE" == "delete" ]]; then
 
 	# Send a DELETE request to the Hetzner Cloud API to delete the server.
 	# https://docs.hetzner.cloud/#servers-delete-a-server
+	# curl retry: https://everything.curl.dev/usingcurl/downloads/retry.html
 	echo "Delete server..."
 	curl \
 		-X DELETE \
+		--retry "$MY_DELETE_WAIT" \
+		--retry-delay "$WAIT_SEC" \
+		--retry-all-errors \
 		--fail-with-body \
 		-H "Content-Type: application/json" \
 		-H "Authorization: Bearer ${MY_HETZNER_TOKEN}" \
@@ -348,23 +377,32 @@ if [[ "$MY_PRIMARY_IPV6" != "null" ]]; then
 	jq ".public_net.ipv6 = $MY_PRIMARY_IPV6" < create-server-ipv6.json > create-server.json && \
 	echo "Primary IPv6 ID added to create-server.json."
 fi
-# Add SSH key configuration to the create-server.json file if MY_SSH_KEY is not "null".
-if [[ "$MY_SSH_KEY" != "null" ]]; then
-	cp create-server.json create-server-ssh.json && \
-	jq ".ssh_keys += [$MY_SSH_KEY]" < create-server-ssh.json > create-server.json && \
-	echo "SSH key added to create-server.json."
-fi
 # Add network configuration to the create-server.json file if MY_NETWORK is not "null".
 if [[ "$MY_NETWORK" != "null" ]]; then
 	cp create-server.json create-server-network.json && \
 	jq ".networks += [$MY_NETWORK]" < create-server-network.json > create-server.json && \
 	echo "Network added to create-server.json."
 fi
+# Add SSH key configuration to the create-server.json file if MY_SSH_KEY is not "null".
+if [[ "$MY_SSH_KEY" != "null" ]]; then
+	cp create-server.json create-server-ssh.json && \
+	jq ".ssh_keys += [$MY_SSH_KEY]" < create-server-ssh.json > create-server.json && \
+	echo "SSH key added to create-server.json."
+fi
+# Add volume configuration to the create-server.json file if MY_VOLUME is not "null".
+if [[ "$MY_VOLUME" != "null" ]]; then
+	cp create-server.json create-server-volume.json && \
+	jq ".volumes += [$MY_VOLUME]" < create-server-volume.json > create-server.json && \
+	echo "Volume added to create-server.json."
+fi
 
 # Send a POST request to the Hetzner Cloud API to create a server.
 # https://docs.hetzner.cloud/#servers-create-a-server
-echo "Create server..."
-if ! curl \
+MAX_RETRIES=$MY_CREATE_WAIT
+RETRY_COUNT=0
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+	echo "Create Server..."
+	if curl \
 	-X POST \
 	--fail-with-body \
 	-o "servers.json" \
@@ -372,9 +410,25 @@ if ! curl \
 	-H "Authorization: Bearer ${MY_HETZNER_TOKEN}" \
 	-d @create-server.json \
 	"https://api.hetzner.cloud/v1/servers"; then
-	cat "servers.json"
-	exit_with_failure "Failed to create Server in Hetzner Cloud!"
-fi
+		echo "Server created successfully."
+		break
+	else
+		# Check if the error is related to resource unavailability
+		# Workaround for https://status.hetzner.com/incident/aa5ce33b-faa5-4fd0-9782-fde43cd270cf
+		if grep -q -E "resource_unavailable|resource_limit_exceeded" "servers.json"; then
+			echo "Resource limitation detected."
+		# If error is not resource-related, don't retry
+		else
+			cat "servers.json"
+			exit_with_failure "Failed to create Server in Hetzner Cloud!"
+		fi
+	fi
+
+	RETRY_COUNT=$((RETRY_COUNT + 1)) # Increment retry counter
+
+	echo "Failed to create Server. Wait $WAIT_SEC seconds... (Attempt $RETRY_COUNT/$MAX_RETRIES)"
+	sleep "$WAIT_SEC"
+done
 
 # Get the Hetzner Server ID from the JSON response (assuming valid JSON)
 MY_HETZNER_SERVER_ID=$(jq -er '.server.id' < "servers.json")
@@ -393,7 +447,6 @@ echo "server_id=$MY_HETZNER_SERVER_ID" >> "$GITHUB_OUTPUT"
 
 # Wait for server
 MAX_RETRIES=$MY_SERVER_WAIT
-WAIT_SEC=10
 RETRY_COUNT=0
 echo "Wait for server..."
 while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do

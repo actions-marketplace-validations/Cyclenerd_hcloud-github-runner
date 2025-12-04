@@ -90,7 +90,7 @@ on:
 jobs:
   create-runner:
     name: Create Hetzner Cloud runner
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.create-hcloud-runner.outputs.label }}
       server_id: ${{ steps.create-hcloud-runner.outputs.server_id }}
@@ -103,6 +103,7 @@ jobs:
           github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
           server_type: cx22
+          location: nbg1  # Nuremberg, Germany
           image: rocky-9 # Rocky Linux 9
 
   do-the-job:
@@ -120,7 +121,7 @@ jobs:
     needs:
       - create-runner # required to get output from the create-runner job
       - do-the-job # required to wait when the main job is done
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
     steps:
       - name: Delete runner
@@ -140,6 +141,8 @@ jobs:
 
 | Name                | Required | Description | Default |
 |---------------------|----------|-------------|---------|
+| `create_wait`       |   | Wait up to `create_wait` retries (10 sec each) to create the Server resource via the Hetzner Cloud API. Retry if: Resource is not available ([Limited availability of Cloud plans](https://status.hetzner.com/incident/aa5ce33b-faa5-4fd0-9782-fde43cd270cf)). | `360` (1 hour) |
+| `delete_wait`       |   | Wait up to `delete_wait` retries (10 sec each) to delete the Server resource via the Hetzner Cloud API. Retry if: Temporary outage of the API ([Fault report on Cloud API and Cloud Console](https://status.hetzner.com/incident/440e6b5f-249c-45fd-8074-e5d79cc4e2a6)). | `360` (1 hour) |
 | `enable_ipv4`       |   | Attach an IPv4 on the public NIC (true/false). If false, no IPv4 address will be attached. Warning: The GitHub API requires IPv4. Disabling it will result in connection failures. | `true` |
 | `enable_ipv6`       |   | Attach an IPv6 on the public NIC (true/false). If false, no IPv6 address will be attached. | `true` |
 | `github_token`      | ✓ (always) | Fine-grained GitHub Personal Access Token (PAT) with 'Read and write' access to 'Administration' assigned. |  |
@@ -159,6 +162,7 @@ jobs:
 | `server_type`       |   | Name of the Server type this Server should be created with. | `cx22` (Intel x86, 2 vCPU, 4GB RAM, 40GB SSD) |
 | `server_wait`       |   | Wait up to `server_wait` retries (10 sec each) for the Hetzner Cloud Server to start. | `30` (5 min) |
 | `ssh_key`           |   | SSH key ID (integer) which should be injected into the Server at creation time. | `null` |
+| `volume`            |   | Specify a Volume ID (integer) to attach and mount to the Server during creation. The volume will be automatically mounted at `/mnt/HC_Volume_[VOLUME-ID]`. The volume must be in the same location as the Server. More details in [Volumes section](#Volumes). | `null` |
 
 ## Outputs
 
@@ -170,6 +174,8 @@ jobs:
 ## Snippets
 
 The following `hcloud` CLI commands can help you find the required input values.
+
+### Locations
 
 **List Locations:**
 
@@ -186,6 +192,8 @@ hil    Hillsboro, OR           us-west        US        Hillsboro, OR
 nbg1   Nuremberg DC Park 1     eu-central     DE        Nuremberg
 sin    Singapore               ap-southeast   SG        Singapore
 ```
+
+### Server Types
 
 **List Server Types:**
 
@@ -215,6 +223,8 @@ cx32    4       shared      x86            8.0 GB     80 GB
 cx42    8       shared      x86            16.0 GB    160 GB
 cx52    16      shared      x86            32.0 GB    320 GB
 ```
+
+### Images
 
 **List x86_64 Images:**
 
@@ -270,11 +280,7 @@ Tip: Create custom images with HashiCorp [Packer](https://github.com/hetznerclou
 hcloud image list --output "columns=ID,DESCRIPTION,ARCHITECTURE,DISK_SIZE" --type "snapshot" --sort "name"
 ```
 
-**List Primary IPs:**
-
-```bash
-hcloud primary-ip list --output "columns=ID,TYPE,NAME,IP,ASSIGNEE"
-```
+### Network
 
 **List Networks:**
 
@@ -282,10 +288,34 @@ hcloud primary-ip list --output "columns=ID,TYPE,NAME,IP,ASSIGNEE"
 hcloud network list --output "columns=ID,NAME,IP_RANGE,SERVERS"
 ```
 
+**List Primary IPs:**
+
+```bash
+hcloud primary-ip list --output "columns=ID,TYPE,NAME,IP,ASSIGNEE"
+```
+
+### SSH
+
 **List SSH Keys:**
 
 ```bash
 hcloud ssh-key list --output "columns=ID,NAME"
+```
+
+### Volumes
+
+**List Volumes:**
+
+```bash
+hcloud volume list --output "columns=ID,NAME,LOCATION"
+```
+
+**Create Volume:**
+
+To create a 10GB volume named `volume-test` in the Nuremberg DC Park 1 (`nbg1`) location, use the following command:
+
+```bash
+hcloud volume create --name "volume-test" --size "10" --format "ext4" --location "nbg1"
 ```
 
 ## Security
