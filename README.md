@@ -28,9 +28,8 @@ This section highlights how using Hetzner Cloud with self-hosted runners for you
 ### Cost Control and Predictability
 
 > [!IMPORTANT]
-> As per [GitHub's documentation](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners), self-hosted runners are free to use with GitHub Actions.
-> Therefore, you won't be charged by GitHub for the execution time of jobs on your self-hosted runners.
-> You'll only pay Hetzner for the server hours itself, which can be a more economical option than GitHub-hosted runners, particularly for resource-intensive or frequent workflows.
+> From March 1, 2026, the cost of using a self-hosted runner on the GitHub Actions cloud platform will be $0.002 USD per minute.
+> You'll also pay Hetzner for the server hours itself, which can be a more economical option than GitHub-hosted runners, particularly for resource-intensive or frequent workflows.
 > Hetzner always round up the hourly usage of a server.
 > If you create a server just for a few minutes, we will still bill you for one whole hour. ([FAQ](https://docs.hetzner.com/cloud/billing/faq)).
 
@@ -50,7 +49,8 @@ The following table provides a comparison of pricing between GitHub-managed Acti
 | 8 Core (Arm)    | $0.84 USD/hr | $0.0226 USD/hr | $0.8174 USD/hr | 97.31 % |
 | 16 Core (Arm)   | $1.56 USD/hr | $0.0443 USD/hr | $1.5157 USD/hr | 97.16 % |
 
-GitHub prices are based on January 1, 2026 without the [new GitHub $0.002 per-minute Actions cloud platform charge](https://resources.github.com/actions/2026-pricing-changes-for-github-actions/).
+GitHub prices are based on January 1, 2026.
+Hetzner prices do not include the [new GitHub $0.002 USD per minute ($0.12 USD/hr) Actions cloud platform charge](https://resources.github.com/actions/2026-pricing-changes-for-github-actions/).
 
 ### Customization and Control
 
