@@ -38,12 +38,12 @@ This section highlights how using Hetzner Cloud with self-hosted runners for you
 
 The following table provides a comparison of pricing between GitHub-managed Actions runners and Hetzner Cloud with self-hosted runners (information provided without guarantee; prices exclude VAT):
 
-| Runner | [GitHub Hosted](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions) | [Hetzner](https://www.hetzner.com/cloud/) | [GitHub Charge](https://resources.github.com/actions/2026-pricing-changes-for-github-actions/) | Total Self-Hosted | Cost Saving | Cost Saving (%) |
+| Runner | [GitHub Hosted](https://docs.github.com/en/billing/reference/actions-runner-pricing) | [Hetzner](https://www.hetzner.com/cloud/) | [GitHub Charge](https://resources.github.com/actions/2026-pricing-changes-for-github-actions/) | Total Self-Hosted | Cost Saving | Cost Saving (%) |
 |-----------------|--------------|----------------|--------------|----------------|----------------|---------|
-| 2 Core (Intel)  | $0.36 USD/hr | $0.0074 USD/hr | $0.12 USD/hr | $0.1274 USD/hr | $0.2326 USD/hr | 64.61 % |
-| 4 Core (Intel)  | $0.72 USD/hr | $0.0127 USD/hr | $0.12 USD/hr | $0.1327 USD/hr | $0.5873 USD/hr | 81.57 % |
-| 8 Core (Intel)  | $1.32 USD/hr | $0.0304 USD/hr | $0.12 USD/hr | $0.1504 USD/hr | $1.1696 USD/hr | 88.61 % |
-| 16 Core (Intel) | $2.52 USD/hr | $0.0611 USD/hr | $0.12 USD/hr | $0.1811 USD/hr | $2.3389 USD/hr | 92.81 % |
+| 2 Core (Intel)  | $0.36 USD/hr | $0.0066 USD/hr | $0.12 USD/hr | $0.1266 USD/hr | $0.2334 USD/hr | 64.83 % |
+| 4 Core (Intel)  | $0.72 USD/hr | $0.0106 USD/hr | $0.12 USD/hr | $0.1306 USD/hr | $0.5894 USD/hr | 81.86 % |
+| 8 Core (Intel)  | $1.32 USD/hr | $0.0170 USD/hr | $0.12 USD/hr | $0.1370 USD/hr | $1.1830 USD/hr | 89.62 % |
+| 16 Core (Intel) | $2.52 USD/hr | $0.0314 USD/hr | $0.12 USD/hr | $0.1514 USD/hr | $2.3686 USD/hr | 93.99 % |
 | 2 Core (Arm)    | $0.30 USD/hr | $0.0074 USD/hr | $0.12 USD/hr | $0.1274 USD/hr | $0.1726 USD/hr | 57.53 % |
 | 4 Core (Arm)    | $0.48 USD/hr | $0.0122 USD/hr | $0.12 USD/hr | $0.1322 USD/hr | $0.3478 USD/hr | 72.46 % |
 | 8 Core (Arm)    | $0.84 USD/hr | $0.0226 USD/hr | $0.12 USD/hr | $0.1426 USD/hr | $0.6974 USD/hr | 83.02 % |
