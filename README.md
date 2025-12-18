@@ -28,8 +28,6 @@ This section highlights how using Hetzner Cloud with self-hosted runners for you
 ### Cost Control and Predictability
 
 > [!IMPORTANT]
-> From March 1, 2026, the cost of using a self-hosted runner on the GitHub Actions cloud platform will be $0.002 USD per minute.
-> You'll also pay Hetzner for the server hours itself, which can be a more economical option than GitHub-hosted runners, particularly for resource-intensive or frequent workflows.
 > Hetzner always round up the hourly usage of a server.
 > If you create a server just for a few minutes, we will still bill you for one whole hour. ([FAQ](https://docs.hetzner.com/cloud/billing/faq)).
 
@@ -38,19 +36,18 @@ This section highlights how using Hetzner Cloud with self-hosted runners for you
 
 The following table provides a comparison of pricing between GitHub-managed Actions runners and Hetzner Cloud with self-hosted runners (information provided without guarantee; prices exclude VAT):
 
-| Runner | [GitHub](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions) | [Hetzner ](https://www.hetzner.com/cloud/) | Cost Saving | Cost Saving (%) |
+| Runner | [GitHub](https://docs.github.com/en/billing/reference/actions-runner-pricing) | [Hetzner](https://www.hetzner.com/cloud/) | Cost Saving | Cost Saving (%) |
 |-----------------|--------------|----------------|----------------|---------|
-| 2 Core (Intel)  | $0.36 USD/hr | $0.0074 USD/hr | $0.3526 USD/hr | 97.94 % |
-| 4 Core (Intel)  | $0.72 USD/hr | $0.0127 USD/hr | $0.7073 USD/hr | 98.24 % |
-| 8 Core (Intel)  | $1.32 USD/hr | $0.0304 USD/hr | $1.2896 USD/hr | 97.70 % |
-| 16 Core (Intel) | $2.52 USD/hr | $0.0611 USD/hr | $2.4589 USD/hr | 97.58 % |
+| 2 Core (Intel)  | $0.36 USD/hr | $0.0066 USD/hr | $0.3534 USD/hr | 98.17 % |
+| 4 Core (Intel)  | $0.72 USD/hr | $0.0106 USD/hr | $0.7094 USD/hr | 98.53 % |
+| 8 Core (Intel)  | $1.32 USD/hr | $0.0170 USD/hr | $1.3030 USD/hr | 98.71 % |
+| 16 Core (Intel) | $2.52 USD/hr | $0.0314 USD/hr | $2.4886 USD/hr | 98.75 % |
 | 2 Core (Arm)    | $0.30 USD/hr | $0.0074 USD/hr | $0.2926 USD/hr | 97.53 % |
 | 4 Core (Arm)    | $0.48 USD/hr | $0.0122 USD/hr | $0.4678 USD/hr | 97.46 % |
 | 8 Core (Arm)    | $0.84 USD/hr | $0.0226 USD/hr | $0.8174 USD/hr | 97.31 % |
 | 16 Core (Arm)   | $1.56 USD/hr | $0.0443 USD/hr | $1.5157 USD/hr | 97.16 % |
 
 GitHub prices are based on January 1, 2026.
-Hetzner prices do not include the [new GitHub $0.002 USD per minute ($0.12 USD/hr) Actions cloud platform charge](https://resources.github.com/actions/2026-pricing-changes-for-github-actions/).
 
 ### Customization and Control
 
