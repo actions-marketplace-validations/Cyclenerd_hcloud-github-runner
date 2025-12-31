@@ -59,6 +59,15 @@ GitHub prices are based on January 1, 2026.
 * **Network Access and Security:** You have more control over network access and security. You can access private resources within your Hetzner Cloud network or other private networks via VPNs.
 * **Larger Disk Space:** If your builds require a lot of disk space for dependencies, build artifacts, or large files, you can easily provision servers with larger disks (up to 960 GB) on Hetzner Cloud. GitHub-managed runners have limited disk space.
 
+## Project Philosophy
+
+This GitHub Action and project allows you to create **ephemeral** and **isolated** runners for each job or workflow.
+The core design principle is **"New Workflow, New Server"**.
+
+*   **Isolation & Security:** Every job or workflow runs in a pristine environment. There is no cross-contamination or security risk from sharing runner instances across different repositories or workflows.
+*   **Lifecycle:** This Action manages the full lifecycle: `Create` -> `Run` -> `Delete` within a single workflow run.
+*   **Cattle, not Pets:** Servers are disposable resources. Long-running, shared resources or maintaining a pool of persistent runners is outside the scope of this project.
+
 ## Usage
 
 Prepare your workflow for Hetzner Cloud self-hosted runners:
