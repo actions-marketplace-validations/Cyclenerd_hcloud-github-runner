@@ -110,7 +110,7 @@ jobs:
           mode: create
           github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-          server_type: cx22
+          server_type: cx23
           location: nbg1  # Nuremberg, Germany
           image: rocky-9 # Rocky Linux 9
 
@@ -167,7 +167,7 @@ jobs:
 | `runner_version`    |   | GitHub Actions Runner version (omit "v"; e.g., "2.321.0"). "latest" will install the latest version. "skip" will skip the installation. A working installation is expected in the `runner_dir`. | `latest` |
 | `runner_wait`       |   | Wait up to `runner_wait` retries (10 sec each) for runner registration. | `60` (10 min) |
 | `server_id`         | ✓ (mode `stop`) | ID (integer) of Hetzner Cloud Server to delete. | |
-| `server_type`       |   | Name of the Server type this Server should be created with. | `cx22` (Intel x86, 2 vCPU, 4GB RAM, 40GB SSD) |
+| `server_type`       |   | Name of the Server type this Server should be created with. | `cx23` (Intel x86, 2 vCPU, 4GB RAM, 40GB SSD) |
 | `server_wait`       |   | Wait up to `server_wait` retries (10 sec each) for the Hetzner Cloud Server to start. | `30` (5 min) |
 | `ssh_key`           |   | SSH key ID (integer) which should be injected into the Server at creation time. | `null` |
 | `volume`            |   | Specify a Volume ID (integer) to attach and mount to the Server during creation. The volume will be automatically mounted at `/mnt/HC_Volume_[VOLUME-ID]`. The volume must be in the same location as the Server. More details in [Volumes section](#Volumes). | `null` |
